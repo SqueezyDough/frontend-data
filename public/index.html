@@ -1,15 +1,72 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
-    <title>NMVW RDF Network Graph</title>
+    <title>NMVW RDF Explorer</title>
     <link rel="stylesheet" type="text/css" href="./site.css">
     <link href="https://fonts.googleapis.com/css?family=Inconsolata&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1 class="title">NMVW RDF Network Graph</h1>
+    <div class="top-bar">
+        <img class="nmvw-logo" src="./images/nmvw.png" alt="NMVW">
+        <hgroup>
+            <h1 class="title">NMVW RDF</h1>
+            <h2 class="title__explorer">Explorer</h2>
+        </hgroup>
+
+        <ul class="legend">
+            <li class="legend__subject"><span>Node</span></li>
+            <li class="legend__predicate"><span>Predicate</span></li>
+            <li class="legend__object"><span>Leaf</span></li>
+        </ul>
+    </div>
+
+    <svg width="1400" height="800"></svg>
+
 </body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
 <script type="module">
+    import * as data from "../src/data.js";
     import * as app from "../src/app.js";
 
-    app.default();
+
+    data.getLinks().then( linksList => {
+        let uniqueNodes = linksList.map (item => {
+            return item.tm.value;
+        })
+
+        let links = linksList.map( item => {
+            let link = {};
+
+            link.source = item.tm.value;
+            link.predicate = item.pred.value;
+            link.target = item.obj.value;
+
+            return link;
+        });
+
+
+        data.getNodes().then( nodesList => {
+            let nodes = nodesList.map( item => {
+                let node = {};
+
+                node.id = item.tm.value;
+                node.label = item.tmLabel.value;
+
+                if (arrayIncludes(node.id, uniqueNodes)) {
+                    node.type = "node";
+                } else {
+                    node.type = "leaf"
+                }
+
+                return node;
+            });
+
+            app.drawGraph(nodes, links);
+        });
+
+    })
+
+    function arrayIncludes (string, array){
+        return array.some( testString => string.includes(testString))
+    };
 </script>
