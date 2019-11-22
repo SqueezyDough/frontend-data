@@ -3,22 +3,31 @@ export { drawGraph }
 // edit from example: http://bl.ocks.org/jose187/4733747
 function drawGraph(nodes, links) {
     let svg = d3.select("svg"),
-    width = svg.attr("width"),
-    height = svg.attr("height");
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+    // zoom fuctionality: https://bl.ocks.org/puzzler10/4438752bb93f45dc5ad5214efaa12e4a
+    let zoom_handler = d3.zoom()
+        .on("zoom", zoom_actions);
+
+    zoom_handler(svg);
+    let g = svg.append("g")
+               .attr("class", "everything");
+
 
     let simulation = d3.forceSimulation()
         .force("link", d3.forceLink().id(function(d) { return d.id; }))
         .force("charge", d3.forceManyBody())
-        .force("center", d3.forceCenter(width / 2, height / 2));
+        .force("center", d3.forceCenter(width / 2, height / 2))
 
-    let link = svg.append("g")
+    let link = g.append("g")
         .attr("class", "links")
         .selectAll("line")
         .data(links)
         .enter().append("line")
         .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
 
-    let node = svg.append("g")
+    let node = g.append("g")
         .attr("class", "nodes")
         .selectAll("g")
         .data(nodes)
@@ -60,6 +69,11 @@ function drawGraph(nodes, links) {
     simulation.force("link")
         .links(links);
 
+    //Zoom functions
+    function zoom_actions(){
+        g.attr("transform", d3.event.transform)
+    }
+
     function ticked() {
         link
             .attr("x1", function(d) { return d.source.x; })
@@ -90,5 +104,4 @@ function drawGraph(nodes, links) {
     d.fx = null;
     d.fy = null;
     }
-
 }
