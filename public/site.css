@@ -1,6 +1,7 @@
 body {
-    background-color: #11032B;
+    background-color: #030A27;
     font-family: 'Inconsolata', monospace;
+    overflow: hidden;
 }
 
 .top-bar {
@@ -35,11 +36,11 @@ body {
     border-left: 1px solid rgba(255,255,255,0.2);
 }
 
-.legend__subject, .legend__predicate, .legend__object {
+.legend__node, .legend__predicate, .legend__leaf {
     padding: .5rem;
 }
 
-.legend__subject::before, .legend__object::before {
+.legend__node::before, .legend__leaf::before {
     content: '';
     display: inline-block;
     margin: 0 .5rem;
@@ -48,11 +49,11 @@ body {
     border-radius: 50px;
 }
 
-.legend__subject::before {
+.legend__node::before {
     background-color: rgba(236,63,83,0.75);
 }
 
-.legend__object::before {
+.legend__leaf::before {
     background-color: rgba(63,141,236,0.75);
 }
 
@@ -61,30 +62,24 @@ body {
     display: inline-block;
     margin: 0 .5rem;
     width: 10px;
-    height: 1px;
-    background-color: rgba(216,216,216,0.31);
+    height: 3px;
+    background-color: rgba(216,216,216,0.3);
 }
 
-.links line {
-    stroke: rgba(216,216,216,0.31);
+.links {
+    stroke: rgba(216,216,216,0.3);
     cursor: pointer;
 }
 
-text {
-    color: rgba(255,255,255,0.5);
-    opacity: .6;
-    cursor: pointer;
-}
-
-.node {
+.type-node {
     fill: rgba(236,63,83,0.75);
 }
 
-/* .node text {
-    opacity: .1;
+/* text {
+    display: none;;
 } */
 
-.leaf {
+.type-leaf {
     fill: rgba(63,141,236,0.75);
     cursor: pointer;
 }

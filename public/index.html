@@ -14,9 +14,9 @@
         </hgroup>
 
         <ul class="legend">
-            <li class="legend__subject"><span>Node</span></li>
+            <li class="legend__node"><span>Node</span></li>
             <li class="legend__predicate"><span>Predicate</span></li>
-            <li class="legend__object"><span>Leaf</span></li>
+            <li class="legend__leaf"><span>Leaf</span></li>
         </ul>
     </div>
 
@@ -27,45 +27,16 @@
 <script type="module">
     import * as data from "../src/data.js";
     import * as app from "../src/app.js";
-
+    import * as utils from "../src/utils.js";
 
     data.getLinks().then( linksList => {
-        let uniqueNodes = linksList.map (item => {
-            return item.tm.value;
-        })
-
-        let links = linksList.map( item => {
-            let link = {};
-
-            link.source = item.tm.value;
-            link.predicate = item.pred.value;
-            link.target = item.obj.value;
-
-            return link;
-        });
+        let links = utils.createLinksList(linksList);
 
         data.getNodes().then( nodesList => {
-            let nodes = nodesList.map( item => {
-                let node = {};
-
-                node.id = item.tm.value;
-                node.label = item.tmLabel.value;
-
-                if (arrayIncludes(node.id, uniqueNodes)) {
-                    node.type = "node";
-                } else {
-                    node.type = "leaf"
-                }
-
-                return node;
-            });
+            let tmNodes = utils.getTmNodes(linksList);
+            let nodes = utils.createNodes(nodesList, tmNodes);
 
             app.drawGraph(nodes, links);
         });
-
-    })
-
-    function arrayIncludes (string, array){
-        return array.some( testString => string.includes(testString))
-    };
+    });
 </script>
