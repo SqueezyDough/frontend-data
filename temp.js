@@ -165,35 +165,42 @@ function update() {
             }
         }
 
-        // let selectLinks = d3.select(".links")
-        // .selectAll("line").data(newLinks);
+        let selectLinks = d3.select(".links")
+        .selectAll("line").data(newLinks);
 
 
-        // let selectNodes = d3.select(".nodes")
-        //                     .selectAll("g").data(result);
+        let selectNodes = d3.select(".nodes")
+                            .selectAll("g").data(result);
 
-        // let node = createNode(g, result);
-        // let link = createLinks(g, newLinks)
+        let node = createNode(g, result);
+        let link = createLinks(g, newLinks)
 
-        // let lables = createLables(node);
-        // let circles = createCircles(node);
+        let lables = createLables(node);
+        let circles = createCircles(node);
 
-        // lables = lables.merge(lables)
+        console.log(all)
 
-        // console.log(all)
+        selectLinks.exit().remove();
+        selectNodes.exit().remove();
 
-        // selectLinks.exit().remove();
-        // selectNodes.exit().remove();
+        link.exit().remove();
+        node.exit().remove();
 
-        // link.exit().remove();
-        // node.exit().remove();
+        simulation
+        .nodes(result)
+        .on("tick", ticked);
 
-        // simulation
-        // .nodes(result)
-        // .on("tick", ticked);
-
-        // simulation.force("link")
-        //     .links(newLinks);
+        simulation.force("link")
+            .links(newLinks);
 
     });
 }
+
+
+
+
+// force
+let simulation = d3.forceSimulation()
+.force("link", d3.forceLink().id(function(d) { return d.id; }).distance(20).strength(0.5))
+.force("charge", d3.forceManyBody())
+.force("center", d3.forceCenter(width / 2, height / 2))

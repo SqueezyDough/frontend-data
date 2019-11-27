@@ -1,45 +1,75 @@
 export { drawGraph }
-import * as data from "../src/data.js";
-import * as utils from "../src/utils.js";
 
 // edit from example: http://bl.ocks.org/jose187/4733747
 function drawGraph(nodes, links) {
-    let svg = d3.select("svg"),
-        width = +svg.attr("width"),
-        height = +svg.attr("height");
+    const svg = d3.select("svg"),
+        width = svg.attr("width"),
+        height = svg.attr("height");
 
-    // zoom fuctionality: https://bl.ocks.org/puzzler10/4438752bb93f45dc5ad5214efaa12e4a
-    let zoom_handler = d3.zoom()
+    // zoom functionality: https://bl.ocks.org/puzzler10/4438752bb93f45dc5ad5214efaa12e4a
+    const zoom_handler = d3.zoom()
         .on("zoom", zoom_actions);
 
     zoom_handler(svg);
 
-    let network = svg.append("g")
-               .attr("class", "network");
+    const tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("visibility", "hidden")
+        .style("z-index", "1")
+
+    const nodeInfo = d3.select("body")
+        .append("div")
+        .attr("class", "node-info")
+        .style("position", "absolute")
+        .style("display", "none")
+        .style("z-index", "1")
+
+    const network = svg.append("g")
+        .attr("class", "network");
+
+    // links
+    const link = network.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(links)
+        .enter().append("line")
+        .attr("class","link")
 
     // nodes
-    let nodesGroup = network
+    const nodesGroup = network
         .append("g")
         .attr("class", "nodes")
         .selectAll("g")
         .data(nodes)
 
-    nodesGroup.exit().remove();
+    const node = nodesGroup.enter()
+        .append("g").attr("class","node")
+        .on("click", d => {
+            update(d)
+            nodeInfo.style("display", "block")
+                .text(`${d.label} - ${d.id}`)
 
-    let node = nodesGroup.enter()
-                         .append("g").attr("class","node");
+        })
+        .on("mouseover", d => {
+            return tooltip.style("visibility", "visible")
+                          .text(d.label)
+        })
+        .on("mousemove", () => {
+            // tt positioning: https://www.d3-graph-gallery.com/graph/interactivity_tooltip.html
+            return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px")
+        })
+        .on("mouseout", () => {
+            return tooltip.style("visibility", "hidden")
+        });
 
     createCircles(node);
-    createLabels(node);
+    //createLabels(node);
 
-    nodesGroup = nodesGroup.merge(node);
+    //nodesGroup = nodesGroup.merge(node);
 
-
-    // links
-    let link = createLinks(network, links)
-
-
-    let simulation = d3.forceSimulation()
+    const simulation = d3.forceSimulation()
         .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(20).strength(0.5))
         .force("charge", d3.forceManyBody())
         .force("center", d3.forceCenter(width / 2, height / 2))
@@ -51,18 +81,7 @@ function drawGraph(nodes, links) {
     simulation.force("link")
         .links(links);
 
-    function createLinks(container, data) {
-        let link = container.append("g")
-                            .attr("class", "links")
-                            .selectAll("line")
-                            .data(data)
-                            .enter().append("line")
-
-        return link;
-    }
-
     function createLabels(node) {
-
         node.append("text")
             .attr('font-family',"Inconsolata")
             .attr('fill',"rgba(255,255,255,0.6)")
@@ -78,20 +97,19 @@ function drawGraph(nodes, links) {
             .text(function(d) { return d.id; });
 
         return node;
-
     }
 
     function createCircles(node) {
-        let circles = node.append("circle")
+        const circles = node.append("circle")
         .attr("r", function(d) {
             if (d.type === "node") {
-                return 7;
+                return 10;
             } else {
-                return 4;
+                return 6;
             }
         })
+
         .attr("class", function(d){ return `type-${d.type}`})
-        .on("click", update)
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
@@ -100,18 +118,20 @@ function drawGraph(nodes, links) {
         return circles;
     }
 
-    function update() {
+    function update(sourceNode) {
         simulation.stop();
 
-        let originalNodes = simulation.nodes()
-        let originalLinks = simulation.force("link").links()
+        const originalNodes = simulation.nodes()
+        const originalLinks = simulation.force("link").links()
 
-        let centerNode = originalNodes.filter(d => d.id === "https://hdl.handle.net/20.500.11840/termmaster2712")
-        let nodeLinks = originalLinks.filter(d =>
+        // update pattern: https://livebook.manning.com/book/d3js-in-action-second-edition/chapter-7/142
+        const centerNode = originalNodes.filter(d => d.id === sourceNode.id)
+        const nodeLinks = originalLinks.filter(d =>
             centerNode.includes(d.source) ||
             centerNode.includes(d.target))
+        // end
 
-        let targetNodes = nodeLinks.map(d => {
+        const targetNodes = nodeLinks.map(d => {
             return originalNodes.filter(item =>
                 d.source.id.includes(item.id) ||
                 d.target.id.includes(item.id))
@@ -121,24 +141,25 @@ function drawGraph(nodes, links) {
             .data(targetNodes, d => d.id)
             .exit()
             .transition()
-            .duration(300)
+            .duration(500)
+            .style("opacity", 0)
             .remove()
 
         d3.selectAll(".links line")
             .data(nodeLinks, d => `${d.source.id}-${d.target.id}`)
             .exit()
             .transition()
-            .duration(300)
+            .duration(400)
             .style("opacity", 0)
             .remove()
 
-        simulation
-            .nodes(originalNodes)
+            // createLabels(node);
+
         simulation.force("link")
-            .links(nodeLinks)
+                  .links(nodeLinks)
+
         simulation.alpha(1)
         simulation.restart()
-
     }
 
     //Zoom functions
