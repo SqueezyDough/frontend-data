@@ -91,7 +91,7 @@ body {
 
 .type-node:hover, .type-leaf:hover {
     fill: #5736BB;
-    /* transform: scale(1.3); */
+    transform: scale(1.3);
 }
 
 .tooltip {
@@ -131,7 +131,7 @@ body {
     color: #5736BB
 }
 
-.btn--reset {
+.reset-nodes {
     position: absolute;
     bottom: 2.6rem;
     left: 1rem;
@@ -148,6 +148,6 @@ body {
     transition: .3s;
 }
 
-.btn--reset:hover {
+.reset-nodes:hover {
     background-color: #5736BB;
 }

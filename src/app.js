@@ -47,7 +47,7 @@ function drawGraph(nodes, links) {
 
     const node = nodesGroup.enter()
         .append("g").attr("class","node")
-        .on('click', function(d){
+        .on('click', d => {
             update(nodes, links, d)
             nodeInfo.html(`<span class="node-info__label">${d.label}</span> <a class="node-info__link" href=${d.id} target=__blank>${d.id}</a>`)
                     .style("display", "block")
@@ -102,37 +102,53 @@ function drawGraph(nodes, links) {
     const allNodes = simulation.nodes();
     const allLinks = simulation.force("link").links();
 
+    d3.select(".reset-nodes")
+        .on('click', () => {
+            update(allNodes, allLinks)
+            nodeInfo.html(``)
+                    .style("display", "none")
+        })
+
     // update nodes and links
     function update(nodes, links, sourceNode) {
         const originalNodes = allNodes;
         const originalLinks = allLinks;
 
-        // update pattern: https://livebook.manning.com/book/d3js-in-action-second-edition/chapter-7/142
-        const centerNode = originalNodes.filter(d => d.id === sourceNode.id)
-        links = originalLinks.filter(d =>
-            centerNode.includes(d.source) ||
-            centerNode.includes(d.target))
+        // -> true if user clicked on a node
+        if (sourceNode) {
+            // update pattern: https://livebook.manning.com/book/d3js-in-action-second-edition/chapter-7/142
+            const centerNode = originalNodes.filter(d => d.id === sourceNode.id)
+            links = originalLinks.filter(d =>
+                centerNode.includes(d.source) ||
+                centerNode.includes(d.target))
 
-        nodes = links.map(d => {
-            return originalNodes.filter(item =>
-                d.source.id.includes(item.id) ||
-                d.target.id.includes(item.id))
-        }).flat()
+            nodes = links.map(d => {
+                return originalNodes.filter(item =>
+                    d.source.id.includes(item.id) ||
+                    d.target.id.includes(item.id))
+            }).flat()
 
-        // remove dups: https://dev.to/marinamosti/removing-duplicates-in-an-array-of-objects-in-js-with-sets-3fep
-        nodes = nodes.reduce((acc, current) => {
-            const x = acc.find(item => item.id === current.id);
-            if (!x) {
-              return acc.concat([current]);
-            } else {
-              return acc;
-            }
-        }, []);
+            // remove dups: https://dev.to/marinamosti/removing-duplicates-in-an-array-of-objects-in-js-with-sets-3fep
+            nodes = nodes.reduce((acc, current) => {
+                const x = acc.find(item => item.id === current.id);
+                if (!x) {
+                return acc.concat([current]);
+                } else {
+                return acc;
+                }
+            }, []);
+        // -> default
+        } else {
+            nodes = originalNodes;
+            links = originalLinks;
+        }
 
         d3.select(".network").select(".nodes").selectAll(".node")
             .data(nodes)
             .join( enter => {
                 const nodeEnter = enter.append("g").attr("class","node")
+
+                // node events
                 .on('click', function(d){
                     update(nodes, links, d)
                     nodeInfo.html(`<span class="node-info__label">${d.label}</span> <a class="node-info__link" href=${d.id} target=__blank>${d.id}</a>`)
@@ -151,6 +167,8 @@ function drawGraph(nodes, links) {
                 }).attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y + ")";
                 });
+
+                // node circles
                 nodeEnter.append("circle")
                 .attr("r", function(d) {
                     if (d.type === "node") {
@@ -174,9 +192,9 @@ function drawGraph(nodes, links) {
                     }
             }).attr("class", d => `type-${d.type}`)
             .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended))
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended))
         })
 
         d3.select(".network").select(".links").selectAll(".link")
@@ -198,9 +216,6 @@ function drawGraph(nodes, links) {
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
             })
-
-            // simulation.force("link")
-            // .links(links);
     }
 
     function ticked() {
