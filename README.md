@@ -20,4 +20,12 @@ A network diagram seems to be the best candidate to visualise this data structur
 * Hover on node shows tooltip with details and link.
 
 ## Install
+### Clone repository
+```
+git clone https://github.com/SqueezyDough/frontend-data.git
+```
 
+Open `index.html` to view your data
+
+#### Endpoint
+Please use your own endpoint
