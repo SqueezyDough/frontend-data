@@ -34,6 +34,7 @@ function drawGraph(nodes, links) {
         .attr("class", "links")
         .selectAll("line")
         .data(links)
+
         .enter().append("line")
         .attr("class","link")
 
@@ -46,11 +47,10 @@ function drawGraph(nodes, links) {
 
     const node = nodesGroup.enter()
         .append("g").attr("class","node")
-        .on("click", d => {
-            update(d)
-            nodeInfo.style("display", "block")
-                .text(`${d.label} - ${d.id}`)
-
+        .on('click', function(d){
+            update(nodes, links, d)
+            nodeInfo.html(`<span class="node-info__label">${d.label}</span> <a class="node-info__link" href=${d.id} target=__blank>${d.id}</a>`)
+                    .style("display", "block")
         })
         .on("mouseover", d => {
             return tooltip.style("visibility", "visible")
@@ -64,40 +64,8 @@ function drawGraph(nodes, links) {
             return tooltip.style("visibility", "hidden")
         });
 
+    // create circles for each node
     createCircles(node);
-    //createLabels(node);
-
-    //nodesGroup = nodesGroup.merge(node);
-
-    const simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(20).strength(0.5))
-        .force("charge", d3.forceManyBody())
-        .force("center", d3.forceCenter(width / 2, height / 2))
-
-    simulation
-        .nodes(nodes)
-        .on("tick", ticked);
-
-    simulation.force("link")
-        .links(links);
-
-    function createLabels(node) {
-        node.append("text")
-            .attr('font-family',"Inconsolata")
-            .attr('fill',"rgba(255,255,255,0.6)")
-            .attr('x', 10)
-            .attr('y', 3)
-            .text(function(d) {
-                if (d.type === "node") {
-                    return d.label;
-                }
-            })
-
-        node.append("id")
-            .text(function(d) { return d.id; });
-
-        return node;
-    }
 
     function createCircles(node) {
         const circles = node.append("circle")
@@ -108,8 +76,7 @@ function drawGraph(nodes, links) {
                 return 6;
             }
         })
-
-        .attr("class", function(d){ return `type-${d.type}`})
+        .attr("class", d => `type-${d.type}`)
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
@@ -118,53 +85,122 @@ function drawGraph(nodes, links) {
         return circles;
     }
 
-    function update(sourceNode) {
-        simulation.stop();
+    // simulation
+    const simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id).distance(20).strength(0.5))
+        .force("charge", d3.forceManyBody())
+        .force("center", d3.forceCenter(width / 2, height / 2))
 
-        const originalNodes = simulation.nodes()
-        const originalLinks = simulation.force("link").links()
+    simulation
+        .nodes(nodes)
+        .on("tick", ticked);
+
+    simulation.force("link")
+        .links(links);
+
+    // save first init
+    const allNodes = simulation.nodes();
+    const allLinks = simulation.force("link").links();
+
+    // update nodes and links
+    function update(nodes, links, sourceNode) {
+        const originalNodes = allNodes;
+        const originalLinks = allLinks;
 
         // update pattern: https://livebook.manning.com/book/d3js-in-action-second-edition/chapter-7/142
         const centerNode = originalNodes.filter(d => d.id === sourceNode.id)
-        const nodeLinks = originalLinks.filter(d =>
+        links = originalLinks.filter(d =>
             centerNode.includes(d.source) ||
             centerNode.includes(d.target))
-        // end
 
-        const targetNodes = nodeLinks.map(d => {
+        nodes = links.map(d => {
             return originalNodes.filter(item =>
                 d.source.id.includes(item.id) ||
                 d.target.id.includes(item.id))
         }).flat()
 
-        d3.selectAll(".node")
-            .data(targetNodes, d => d.id)
-            .exit()
-            .transition()
-            .duration(500)
-            .style("opacity", 0)
-            .remove()
+        // remove dups: https://dev.to/marinamosti/removing-duplicates-in-an-array-of-objects-in-js-with-sets-3fep
+        nodes = nodes.reduce((acc, current) => {
+            const x = acc.find(item => item.id === current.id);
+            if (!x) {
+              return acc.concat([current]);
+            } else {
+              return acc;
+            }
+        }, []);
 
-        d3.selectAll(".links line")
-            .data(nodeLinks, d => `${d.source.id}-${d.target.id}`)
-            .exit()
-            .transition()
-            .duration(400)
-            .style("opacity", 0)
-            .remove()
+        d3.select(".network").select(".nodes").selectAll(".node")
+            .data(nodes)
+            .join( enter => {
+                const nodeEnter = enter.append("g").attr("class","node")
+                .on('click', function(d){
+                    update(nodes, links, d)
+                    nodeInfo.html(`<span class="node-info__label">${d.label}</span> <a class="node-info__link" href=${d.id} target=__blank>${d.id}</a>`)
+                            .style("display", "block")
+                })
+                .on("mouseover", d => {
+                    return tooltip.style("visibility", "visible")
+                                  .text(d.label)
+                })
+                .on("mousemove", () => {
+                    // tt positioning: https://www.d3-graph-gallery.com/graph/interactivity_tooltip.html
+                    return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px")
+                })
+                .on("mouseout", () => {
+                    return tooltip.style("visibility", "hidden")
+                }).attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
+                nodeEnter.append("circle")
+                .attr("r", function(d) {
+                    if (d.type === "node") {
+                        return 10;
+                    } else {
+                        return 6;
+                    }
+                })
+                .attr("class", d => `type-${d.type}`)
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+            },
+            update => {
+                update.select("circle").attr("r", function(d) {
+                    if (d.type === "node") {
+                        return 10;
+                    } else {
+                        return 6;
+                    }
+            }).attr("class", d => `type-${d.type}`)
+            .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended))
+        })
 
-            // createLabels(node);
+        d3.select(".network").select(".links").selectAll(".link")
+            .data(links)
+            .join( enter => {
+                enter.append("line")
+                    .attr("class","link")
+                    .attr("x1", function(d) { return d.source.x; })
+                    .attr("y1", function(d) { return d.source.y; })
+                    .attr("x2", function(d) { return d.target.x; })
+                    .attr("y2", function(d) { return d.target.y; });
+            },
+            update => {
+                update.select(".link")
+                .attr("x1", function(d) {
+                    return d.source.x;
+                })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+            })
 
-        simulation.force("link")
-                  .links(nodeLinks)
-
-        simulation.alpha(1)
-        simulation.restart()
-    }
-
-    //Zoom functions
-    function zoom_actions() {
-        network.attr("transform", d3.event.transform)
+            // simulation.force("link")
+            // .links(links);
     }
 
     function ticked() {
@@ -178,6 +214,11 @@ function drawGraph(nodes, links) {
             .attr("transform", function(d) {
                 return "translate(" + d.x + "," + d.y + ")";
             })
+    }
+
+    //Zoom functions
+    function zoom_actions() {
+        network.attr("transform", d3.event.transform)
     }
 
     function dragstarted(d) {
