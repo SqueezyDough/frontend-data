@@ -149,7 +149,7 @@ function drawGraph(nodes, links) {
                 const nodeEnter = enter.append("g").attr("class","node")
 
                 // node events
-                .on('click', function(d){
+                .on('click', d => {
                     update(nodes, links, d)
                     nodeInfo.html(`<span class="node-info__label">${d.label}</span> <a class="node-info__link" href=${d.id} target=__blank>${d.id}</a>`)
                             .style("display", "block")
@@ -184,17 +184,13 @@ function drawGraph(nodes, links) {
                     .on("end", dragended));
             },
             update => {
-                update.select("circle").attr("r", function(d) {
-                    if (d.type === "node") {
-                        return 10;
-                    } else {
-                        return 6;
-                    }
-            }).attr("class", d => `type-${d.type}`)
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended))
+            update.select("circle").attr("r", function(d) {
+                if (d.type === "node") {
+                    return 10;
+                } else {
+                    return 6;
+                }
+        }).attr("class", d => `type-${d.type}`)
         })
 
         d3.select(".network").select(".links").selectAll(".link")
