@@ -13,7 +13,8 @@ A RDF Structure visualisation from [source](https://s3.amazonaws.com/dev.assets.
 #### Graph type
 A network diagram seems to be the best candidate to visualise this data structure. A network diagram is used to show how objects are connected to each other. An object is presented as a node. The node can be connected with multiple other nodes and can be grouped together to form dedicated clusters. 
 
-![Prototype](https://github.com/SqueezyDough/frontend-data/blob/master/github/network.png)
+![Site](https://github.com/SqueezyDough/frontend-data/blob/master/github/site.png)
+![Update](https://github.com/SqueezyDough/frontend-data/blob/master/github/update.png)
 
 #### Interaction
 * Click own a node will only show all connections to that node.
